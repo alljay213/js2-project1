@@ -1,0 +1,91 @@
+body {
+  background-color: #ffffff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+#container {
+  padding: 10px;
+  background-color: #f0f0f0;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  margin-top: 50px;
+  border: none;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  width: auto;
+}
+
+#date-container {
+  display: flex;
+  justify-content: space-between;
+  width: 75%;
+  margin-bottom: 15px;
+  padding: 10px;
+}
+
+.dates {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 150%;
+  padding: 0 10px;
+}
+.dates select {
+  width: 50%;
+}
+
+#retrieve-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn {
+  border-radius: 5px;
+  background-color: #1e90ff;
+  border: none;
+  color: white;
+  padding: 5px 20px;
+  text-align: center;
+  font-size: 16px;
+  margin: 10px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #1c86ee;
+}
+
+.btn:active {
+  background-color: #1874cd;
+}
+
+#input-container {
+  display: flex-end;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+#input-container label {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+#input-container input {
+  margin-left: 10px;
+}
+
+#button-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
