@@ -37,6 +37,7 @@ body {
   width: 150%;
   padding: 0 10px;
 }
+
 .dates select {
   width: 50%;
 }
@@ -79,6 +80,7 @@ body {
   justify-content: flex-end;
   width: 100%;
 }
+
 #input-container input {
   margin-left: 10px;
 }

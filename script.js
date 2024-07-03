@@ -1,96 +1,171 @@
-// Doesn't included the <select> HTML controls
-var baseballObject;
-var gameIndex = 0;
+document.addEventListener('DOMContentLoaded', function() {
+  var baseballObject;
+  var gameIndex = 0;
+  const ISOK = 200;
+  const API_KEY = "a4ba10e4181e4789ad13f742e164a09e"; // Inserted API key
+  const playerCache = {};
+  const stadiumCache = {};
 
-// return code value from requests
-const ISOK = 200;
+  function getJSONAsync(url, callback) {
+    var request = new XMLHttpRequest();
 
-// AJAX asynchronous XMLHttpRequest to get the JSON
-// from the site defined by url and using the
-// callback function callback (alias for myCallBack)
-function getJSONAsync(url) {
-  var request = new XMLHttpRequest();
-  request.onload = function () {
-    if (request.status === ISOK) {
-      baseballObject = JSON.parse(request.responseText);
+    request.onload = function() {
+      if (request.status === ISOK) {
+        callback(JSON.parse(request.responseText));
+      } else {
+        alert('Failed to load data. Status: ' + request.status);
+      }
+    };
+
+    request.onerror = function() {
+      alert('Network error occurred while trying to fetch data.');
+    };
+
+    request.open("GET", url);
+    request.setRequestHeader("Ocp-Apim-Subscription-Key", API_KEY); // Set your API key here
+    request.send();
+  }
+
+  function getPlayerDetails(playerId, callback) {
+    if (playerCache[playerId]) {
+      callback(playerCache[playerId]);
+    } else {
+      var playerURL = `https://api.sportsdata.io/v3/mlb/scores/json/Player/${playerId}?key=${API_KEY}`;
+      getJSONAsync(playerURL, function(data) {
+        playerCache[playerId] = data;
+        callback(data);
+      });
+    }
+  }
+
+  function getStadiumDetails() {
+    var stadiumURL = `https://api.sportsdata.io/v3/mlb/scores/json/Stadiums?key=${API_KEY}`;
+    getJSONAsync(stadiumURL, function(data) {
+      data.forEach(stadium => {
+        stadiumCache[stadium.StadiumID] = stadium;
+      });
+    });
+  }
+
+  const year = document.getElementById('year');
+  const month = document.getElementById('month');
+  const day = document.getElementById('day');
+  const retrieveBtn = document.getElementById('retrieve');
+
+  function getBaseballDataAsynch() {
+    let yearVal = parseInt(year.value);
+    let monthVal = parseInt(month.value);
+    let dayVal = parseInt(day.value);
+
+    if (isNaN(yearVal) || isNaN(monthVal) || isNaN(dayVal)) {
+      alert('Please enter valid numeric values for year, month, and day.');
+      return;
+    }
+
+    // Use the Sportsdata.io API endpoint
+    var tempURL =
+      `https://api.sportsdata.io/v3/mlb/scores/json/GamesByDate/${yearVal}-${monthVal.toString().padStart(2, '0')}-${dayVal.toString().padStart(2, '0')}?key=${API_KEY}`;
+
+    getJSONAsync(tempURL, function(data) {
+      baseballObject = data;
       gameIndex = 0;
       displayCurrentGame();
+    });
+  }
+
+  retrieveBtn.addEventListener('click', getBaseballDataAsynch);
+
+  const nextBtn = document.getElementById('next');
+  function nextGame() {
+    if (baseballObject && baseballObject.length) {
+      if (gameIndex < baseballObject.length - 1) {
+        gameIndex++;
+        displayCurrentGame();
+      } else {
+        alert("No more games available");
+      }
+    } else {
+      alert("No game data available.");
     }
-  };
-  request.open("GET", url);
-  request.send();
-}
+  }
+  nextBtn.addEventListener("click", nextGame);
 
-// onload event handler creates the URL
-// for a given year month and day
-function getBaseballDataAsynch() {
-  var year = "2018";
-  var month = "07";
-  var day = "08";
+  const previousBtn = document.getElementById('previous');
+  function previousGame() {
+    if (baseballObject && baseballObject.length) {
+      if (gameIndex > 0) {
+        gameIndex--;
+        displayCurrentGame();
+      } else {
+        alert("No more games available");
+      }
+    } else {
+      alert("No game data available.");
+    }
+  }
+  previousBtn.addEventListener("click", previousGame);
 
-  // build a URL as required by the MLB site
-  var tempURL =
-    "http://gd2.mlb.com/components/game/mlb/year_" +
-    year +
-    "/month_" +
-    month +
-    "/day_" +
-    day +
-    "/master_scoreboard.json";
+  function displayCurrentGame() {
+    if (!baseballObject || !baseballObject.length) {
+      alert('No game data available.');
+      return;
+    }
 
-  // this is what the actual URL will look like
-  // http://gd2.mlb.com/components/game/mlb/year_2017/month_07/day_08/master_scoreboard.json
+    const currentGame = baseballObject[gameIndex];
 
-  // get the data for the specified date with an asynchronous call
-  // the result will be seen above in the callBack function
-  getJSONAsync(tempURL);
-}
+    document.getElementById("homeTeamName").value = currentGame.HomeTeam;
+    document.getElementById("awayTeamName").value = currentGame.AwayTeam;
 
-// the event handler for the "next game" button
-// must check to be sure we're not trying to display
-// a game that's not in the "game" array
-function nextGame() {
-  // if the "gameIndex" is less than the length
-  // of the "game" array -1,
-  // we can add 1 to "gameIndex" and not go "over the top"
-  // of the array
-  if (gameIndex < baseballObject.data.games.game.length - 1) {
-    gameIndex++;
-    displayCurrentGame();
-  } else alert("No more games avaialable");
-}
+    if (currentGame.WinningPitcherID) {
+      getPlayerDetails(currentGame.WinningPitcherID, function(player) {
+        document.getElementById("winningPitcher").value = `${player.FirstName} ${player.LastName}`;
+      });
+    } else {
+      document.getElementById("winningPitcher").value = 'N/A';
+    }
 
-// the event handler for the "previous game" button
-// must check to be sure we're not trying to display
-// a game that's not in the "game" array
-function previousGame() {
-  // if the "gameIndex" is greater than 0
-  // we can subtract 1 from "gameIndex"
-  if (gameIndex > 0) {
-    gameIndex--;
-    displayCurrentGame();
-  } else alert("No more games available");
-}
+    if (currentGame.LosingPitcherID) {
+      getPlayerDetails(currentGame.LosingPitcherID, function(player) {
+        document.getElementById("losingPitcher").value = `${player.FirstName} ${player.LastName}`;
+      });
+    } else {
+      document.getElementById("losingPitcher").value = 'N/A';
+    }
 
-// this function just displays the fields for the "current" game
-// based on the value of the "gameIndex" variable
-function displayCurrentGame() {
-  // assign the home team name from the property "home_team_name" in the "game" array "gameIndex" element
-  // which is from the "games" object which in turn is part of the "data"
-  // manually inspect the MLB.json to see this hierarchy
-  document.getElementById("txtHome").value =
-    baseballObject.data.games.game[gameIndex].home_team_name;
-  document.getElementById("txtAway").value =
-    baseballObject.data.games.game[gameIndex].away_team_name;
+    document.getElementById("venue").value = currentGame.StadiumID ? (stadiumCache[currentGame.StadiumID]?.Name || 'N/A') : 'N/A';
+  }
 
-  var first = baseballObject.data.games.game[gameIndex].winning_pitcher.first;
-  var last = baseballObject.data.games.game[gameIndex].winning_pitcher.last;
-  document.getElementById("txtWinning").value = first + " " + last;
+  const saveGameBtn = document.getElementById('save-game');
+  function saveGame() {
+    if (!baseballObject || !baseballObject.length) {
+      alert('No game data available.');
+      return;
+    }
 
-  first = baseballObject.data.games.game[gameIndex].losing_pitcher.first;
-  last = baseballObject.data.games.game[gameIndex].losing_pitcher.last;
-  document.getElementById("txtLosing").value = first + " " + last;
+    const currentGame = baseballObject[gameIndex];
 
-  document.getElementById("txtVenue").value =
-    baseballObject.data.games.game[gameIndex].venue;
-}
+    currentGame.HomeTeam = document.getElementById("homeTeamName").value;
+    currentGame.AwayTeam = document.getElementById("awayTeamName").value;
+
+    var winningPitcher = document.getElementById("winningPitcher").value.split(" ");
+    if (winningPitcher.length === 2) {
+      currentGame.WinningPitcherFirstName = winningPitcher[0];
+      currentGame.WinningPitcherLastName = winningPitcher[1];
+    }
+
+    var losingPitcher = document.getElementById("losingPitcher").value.split(" ");
+    if (losingPitcher.length === 2) {
+      currentGame.LosingPitcherFirstName = losingPitcher[0];
+      currentGame.LosingPitcherLastName = losingPitcher[1];
+    }
+
+    currentGame.Stadium = currentGame.Stadium || {};
+    currentGame.Stadium.Name = document.getElementById("venue").value;
+
+    alert('Game data saved successfully.');
+  }
+  saveGameBtn.addEventListener("click", saveGame);
+
+  // Fetch stadium details on page load
+  getStadiumDetails();
+});
