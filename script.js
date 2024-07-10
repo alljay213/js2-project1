@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var baseballObject;
   var gameIndex = 0;
   const ISOK = 200;
-  const API_KEY = "a4ba10e4181e4789ad13f742e164a09e"; // Inserted API key
+  const API_KEY = "a4ba10e4181e4789ad13f742e164a09e";
   const playerCache = {};
   const stadiumCache = {};
 
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     request.open("GET", url);
-    request.setRequestHeader("Ocp-Apim-Subscription-Key", API_KEY); // Set your API key here
+    request.setRequestHeader("Ocp-Apim-Subscription-Key", API_KEY);
     request.send();
   }
 
